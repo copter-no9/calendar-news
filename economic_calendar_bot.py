@@ -4,13 +4,13 @@ from datetime import datetime
 import pytz
 import xml.etree.ElementTree as ET
 import random
-import requests
-from datetime import datetime
-import pytz
-import xml.etree.ElementTree as ET
+import time
+import sys
 
-def save_to_file(message):
+def save_to_file(message, update_time, repo_name):
     """ฟังก์ชันสำหรับบันทึกข้อความลงไฟล์ index.html (หน้าเว็บ)"""
+    actions_url = f"https://github.com/{repo_name}/actions/workflows/calendar_bot.yml"
+    
     html_template = f"""<!DOCTYPE html>
 <html lang="th">
 <head>
@@ -67,14 +67,43 @@ def save_to_file(message):
         .copy-btn.copied {{
             background-color: #2ecc71;
         }}
+        .update-time {{
+            text-align: center;
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }}
+        .update-btn {{
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: #f39c12;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: 'Kanit', sans-serif;
+            cursor: pointer;
+            transition: background 0.3s;
+            text-align: center;
+            text-decoration: none;
+            margin-top: 15px;
+            font-weight: 500;
+            box-sizing: border-box;
+        }}
+        .update-btn:hover {{
+            background-color: #d68910;
+        }}
     </style>
 </head>
 <body>
 
     <div class="card">
+        <div class="update-time">🕒 อัปเดตล่าสุด: {update_time}</div>
         <div class="news-content" id="newsText">{message}</div>
 
         <button class="copy-btn" id="copyBtn" onclick="copyText()">📋 กดคัดลอกข้อความ (Copy)</button>
+        <a href="{actions_url}" target="_blank" class="update-btn">🔄 บังคับอัปเดตข้อมูลใหม่ (Manual Update)</a>
     </div>
 
     <script>
@@ -110,25 +139,41 @@ def get_economic_calendar():
     """ฟังก์ชันดึงข้อมูลปฏิทินเศรษฐกิจและคัดกรองข้อมูล"""
     url = "https://nfs.faireconomy.media/ff_calendar_thisweek.xml"
     
-    try:
-        # กำหนด timeout และเพิ่ม Headers เพื่อจำลองว่าเป็นเบราว์เซอร์จริงๆ
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        }
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-        
-        # แปลงข้อมูล XML เป็น list ของ dictionary ให้เหมือน JSON เดิม
-        root = ET.fromstring(response.content)
-        data = []
-        for event in root.findall('event'):
-            item = {}
-            for child in event:
-                item[child.tag] = child.text if child.text else ""
-            data.append(item)
+    # วนลูปเพื่อลองดึงข้อมูลใหม่ หากโดนแบน (Error 429) จะรอแล้วลองใหม่สูงสุด 5 ครั้ง
+    max_retries = 5
+    data = None
+    
+    for attempt in range(max_retries):
+        try:
+            # กำหนด timeout และเพิ่ม Headers เพื่อจำลองว่าเป็นเบราว์เซอร์จริงๆ
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            }
+            response = requests.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
             
-    except requests.exceptions.RequestException as e:
-        print(f"[-] Error fetching data from ForexFactory: {e}")
+            # แปลงข้อมูล XML เป็น list ของ dictionary ให้เหมือน JSON เดิม
+            root = ET.fromstring(response.content)
+            data = []
+            for event in root.findall('event'):
+                item = {}
+                for child in event:
+                    item[child.tag] = child.text if child.text else ""
+                data.append(item)
+            
+            # ถ้าดึงข้อมูลสำเร็จ ให้หลุดออกจากลูปทันที
+            break
+                
+        except requests.exceptions.RequestException as e:
+            print(f"[-] Error fetching data (Attempt {attempt+1}/{max_retries}): {e}")
+            if attempt < max_retries - 1:
+                print("[*] กำลังรอ 30 วินาทีเพื่อลองดึงข้อมูลใหม่ (หลบการโดนบล็อก)...")
+                time.sleep(30)
+            else:
+                print("[-] พยายามดึงข้อมูลจนครบโควต้าแล้ว แต่ยังไม่สำเร็จ")
+                return None
+
+    if data is None:
         return None
 
     # ข้อมูลจาก XML ของ ForexFactory (ผ่าน nfs) เวลาที่ได้มักจะเป็น UTC
@@ -324,7 +369,8 @@ if __name__ == "__main__":
     news_data = get_economic_calendar()
     
     if news_data is None:
-        print("[-] ไม่สามารถดึงข้อมูลได้ โปรแกรมสิ้นสุดการทำงาน")
+        print("[-] ไม่สามารถดึงข้อมูลได้ โปรแกรมสิ้นสุดการทำงานแบบติด Error เพื่อให้ GitHub แจ้งเตือน")
+        sys.exit(1) # บังคับให้โปรแกรมจบแบบมี Error (เพื่อให้ GitHub Action ขึ้นกากบาทสีแดง)
     elif len(news_data) == 0:
         print("[-] วันนี้ไม่มีข่าวเศรษฐกิจสำคัญ (High/Medium)")
         # คุณสามารถเลือกที่จะส่งข้อความไปบอกกลุ่มด้วยก็ได้ว่าวันนี้ไม่มีข่าว 
@@ -335,7 +381,14 @@ if __name__ == "__main__":
         print(final_message)
         print("-" * 30)
         
+        # ดึงเวลาปัจจุบันเพื่อโชว์บนหน้าเว็บ
+        tz_bkk = pytz.timezone('Asia/Bangkok')
+        current_time_str = datetime.now(tz_bkk).strftime("%d/%m/%Y %H:%M น.")
+        
+        # ดึงชื่อ Repository จาก GitHub Actions (ถ้าไม่มีให้ใช้ค่า Default)
+        repo_name = os.environ.get('GITHUB_REPOSITORY', 'username/repo')
+        
         # บันทึกลงไฟล์เพื่อให้ผู้ใช้อ่าน/ก๊อปปี้ผ่านเว็บ
-        save_to_file(final_message)
+        save_to_file(final_message, current_time_str, repo_name)
         
     print("[*] ทำงานเสร็จสิ้น")
