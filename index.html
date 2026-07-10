@@ -54,31 +54,60 @@
         .copy-btn.copied {
             background-color: #2ecc71;
         }
+        .update-time {
+            text-align: center;
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+        .update-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: #f39c12;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: 'Kanit', sans-serif;
+            cursor: pointer;
+            transition: background 0.3s;
+            text-align: center;
+            text-decoration: none;
+            margin-top: 15px;
+            font-weight: 500;
+            box-sizing: border-box;
+        }
+        .update-btn:hover {
+            background-color: #d68910;
+        }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <div class="news-content" id="newsText">📊 อัปเดตตารางข่าวเศรษฐกิจประจำวัน 
-⚠️ ช่วงเวลาเฝ้าระวังความผันผวน 
-⚠️ คำแนะนำ: ควรหลีกเลี่ยงการเทรด
-ก่อนและหลังข่าว 15-30 นาที
+        <div class="update-time">🕒 อัปเดตล่าสุด: 10/07/2026 10:47 น.</div>
+        <div class="news-content" id="newsText">🗓️ Today's Market Watch 
+จับตาข่าววันนี้ 🗓️ 
+
+เช็กเวลาข่าวก่อนเทรด เพื่อลดความเสี่ยง
+จากกราฟกระชาก ‼️ 
+
+(เซฟพอร์ต: แนะนำงดเทรดช่วงข่าว 15-30 นาที)
 
 🏦 วันหยุดธนาคาร [NZD]
-🔴 19:30 | [CAD]
-🔴 19:30 | [CAD]
+🔴 19:30 [CAD]
+🔴 19:30 [CAD]
 
-🛡️ อย่าลืมวางแผนการเทรด
-และบริหารความเสี่ยงให้รัดกุมนะครับ 
-✅ ตั้ง TP / SL ทุกครั้ง
-เพื่อปกป้องพอร์ตของเราให้ปลอดภัย
+💡 Reminder: แผนการเทรดที่ดี 
+ต้องคุมความเสี่ยงได้ มีวินัย ตั้ง TP / SL ทุกครั้ง 
 
-พอร์ตฟ้ากำไรปังๆ ทุกคนครับ 🚀 
-— By Number9Option —
-
+💰 โชคดี มีกำไรครับ 💰 
+© Number9Option
 🔗 อ้างอิงข้อมูลจาก: forexfactory</div>
 
         <button class="copy-btn" id="copyBtn" onclick="copyText()">📋 กดคัดลอกข้อความ (Copy)</button>
+        <a href="https://github.com/copter-no9/calendar-news/actions/workflows/calendar_bot.yml" target="_blank" class="update-btn">🔄 บังคับอัปเดตข้อมูลใหม่ (Manual Update)</a>
     </div>
 
     <script>
