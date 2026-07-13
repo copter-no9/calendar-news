@@ -4,7 +4,7 @@ on:
   schedule:
     # เวลาใน GitHub Actions ใช้มาตรฐาน UTC เสมอ
     # 06:00 น. เวลาไทย (UTC+7) จะตรงกับเวลา 23:00 น. UTC ของวันก่อนหน้า
-    - cron: '17 23 * * *'
+    - cron: '18 3 * * *'
   workflow_dispatch: # ทำให้เราสามารถกดรันแบบ Manual บนหน้าเว็บ GitHub ได้
 
 jobs:
