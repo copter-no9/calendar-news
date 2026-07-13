@@ -373,8 +373,15 @@ if __name__ == "__main__":
         sys.exit(1) # บังคับให้โปรแกรมจบแบบมี Error (เพื่อให้ GitHub Action ขึ้นกากบาทสีแดง)
     elif len(news_data) == 0:
         print("[-] วันนี้ไม่มีข่าวเศรษฐกิจสำคัญ (High/Medium)")
-        # คุณสามารถเลือกที่จะส่งข้อความไปบอกกลุ่มด้วยก็ได้ว่าวันนี้ไม่มีข่าว 
-        # (ในที่นี้จะไม่ส่งข้อความกวนกลุ่ม)
+        final_message = "✅ วันนี้ตลาดปลอดโปร่ง\nไม่มีข่าวเศรษฐกิจสำคัญ (แดง/ส้ม) ให้ต้องระวังครับ\n\nสามารถเทรดตามเทคนิคได้อย่างเต็มที่เลยครับ 📈\n\nขอให้โชคดี มีกำไรครับ 💰\n© Number9Option"
+        
+        # ดึงเวลาปัจจุบันเพื่อโชว์บนหน้าเว็บ
+        tz_bkk = pytz.timezone('Asia/Bangkok')
+        current_time_str = datetime.now(tz_bkk).strftime("%d/%m/%Y %H:%M น.")
+        repo_name = os.environ.get('GITHUB_REPOSITORY', 'username/repo')
+        
+        # อัปเดตหน้าเว็บเพื่อบอกว่าวันนี้ไม่มีข่าว
+        save_to_file(final_message, current_time_str, repo_name)
     else:
         final_message = build_message(news_data)
         print("[+] สร้างข้อความสำเร็จ:\n")
